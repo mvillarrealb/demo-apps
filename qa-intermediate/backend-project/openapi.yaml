@@ -1,0 +1,856 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Finanzas Personales API
+  description: |
+    API REST para gestionar transacciones financieras y categorización de gastos e ingresos.
+    
+    ## Funcionalidades principales:
+    - **Gestión de Categorías**: Crear y consultar categorías de transacciones
+    - **Gestión de Transacciones**: Registrar transacciones con categorización opcional
+    - **Consultas Avanzadas**: Filtros por categoría, tipo, fechas, montos y búsqueda de texto
+    - **Agregaciones**: Resúmenes agrupados por categoría con cálculos netos
+    - **Paginación**: Soporte completo de paginación y ordenamiento
+    
+    ## Convenciones:
+    - **CREDIT**: Ingresos (suma positiva)
+    - **DEBIT**: Egresos (suma negativa)
+    - **Zona horaria**: America/Lima para agregaciones por fecha
+    - **Formato de fechas**: ISO-8601 (yyyy-MM-dd) para filtros de fecha
+  version: 1.0.0
+  contact:
+    name: Equipo de Desarrollo
+    email: desarrollo@interbank.pe
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desarrollo local
+  - url: https://api-finanzas.interbank.pe
+    description: Servidor de producción
+
+paths:
+  /api/categories:
+    post:
+      tags:
+        - Categorías
+      summary: Crear nueva categoría
+      description: Crea una nueva categoría de transacciones con validación de nombre único
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryDto'
+            examples:
+              alimentacion:
+                summary: Categoría de Alimentación
+                value:
+                  name: "Alimentación"
+                  colorHex: "#FF5722"
+              transporte:
+                summary: Categoría de Transporte
+                value:
+                  name: "Transporte"
+                  colorHex: "#2196F3"
+      responses:
+        '201':
+          description: Categoría creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDto'
+              examples:
+                created:
+                  summary: Categoría creada
+                  value:
+                    id: 1
+                    name: "Alimentación"
+                    colorHex: "#FF5722"
+                    createdAt: "2025-09-15T10:30:00Z"
+        '400':
+          description: Error de validación o categoría duplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Error de validación
+                  value:
+                    timestamp: "2025-09-15T10:30:00Z"
+                    status: 400
+                    error: "Validation Failed"
+                    message: "Error de validación en los datos de entrada"
+                    details:
+                      name: "El nombre de la categoría es obligatorio"
+                duplicate_name:
+                  summary: Nombre duplicado
+                  value:
+                    timestamp: "2025-09-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Ya existe una categoría con el nombre: Alimentación"
+
+    get:
+      tags:
+        - Categorías
+      summary: Listar categorías
+      description: |
+        Obtiene una lista paginada de categorías con filtros opcionales.
+        
+        **Parámetros de ordenamiento permitidos:**
+        - `name` (por defecto)
+        - `createdAt`
+        
+        **Formato:** `campo,dirección` (ej: `name,ASC` o `createdAt,DESC`)
+      operationId: getCategories
+      parameters:
+        - name: q
+          in: query
+          description: Búsqueda por nombre de categoría (parcial, case-insensitive)
+          required: false
+          schema:
+            type: string
+          example: "aliment"
+        - name: page
+          in: query
+          description: Número de página (basado en 0)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+        - name: size
+          in: query
+          description: Cantidad de elementos por página (1-100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: sort
+          in: query
+          description: Campo y dirección de ordenamiento
+          required: false
+          schema:
+            type: string
+            pattern: '^(name|createdAt),(ASC|DESC)$'
+            default: "name,ASC"
+          example: "name,ASC"
+      responses:
+        '200':
+          description: Lista de categorías obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageCategoryDto'
+              examples:
+                categories_page:
+                  summary: Página de categorías
+                  value:
+                    content:
+                      - id: 1
+                        name: "Alimentación"
+                        colorHex: "#FF5722"
+                        createdAt: "2025-09-15T10:30:00Z"
+                      - id: 2
+                        name: "Transporte"
+                        colorHex: "#2196F3"
+                        createdAt: "2025-09-15T10:35:00Z"
+                    pageable:
+                      pageNumber: 0
+                      pageSize: 20
+                      sort:
+                        sorted: true
+                        ascending: true
+                    totalElements: 2
+                    totalPages: 1
+                    first: true
+                    last: true
+                    numberOfElements: 2
+        '400':
+          description: Parámetros de consulta inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/categories/{id}:
+    get:
+      tags:
+        - Categorías
+      summary: Obtener categoría por ID
+      description: Obtiene los detalles de una categoría específica por su identificador
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          description: ID único de la categoría
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: Categoría encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDto'
+              examples:
+                category:
+                  summary: Detalles de categoría
+                  value:
+                    id: 1
+                    name: "Alimentación"
+                    colorHex: "#FF5722"
+                    createdAt: "2025-09-15T10:30:00Z"
+        '400':
+          description: ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  summary: Categoría no encontrada
+                  value:
+                    timestamp: "2025-09-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Categoría no encontrada con ID: 999"
+
+  /api/transactions:
+    post:
+      tags:
+        - Transacciones
+      summary: Crear nueva transacción
+      description: |
+        Registra una nueva transacción financiera con validaciones completas.
+        
+        **Validaciones:**
+        - Categoría debe existir (si se especifica)
+        - Monto debe ser mayor a 0
+        - Moneda debe tener exactamente 3 caracteres
+        - Descripción máximo 500 caracteres
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionDto'
+            examples:
+              ingreso_salario:
+                summary: Ingreso por salario
+                value:
+                  accountId: "ACC001"
+                  postedAt: "2025-09-15T08:00:00Z"
+                  amount: 3500.00
+                  type: "CREDIT"
+                  currency: "PEN"
+                  description: "Salario mensual"
+                  categoryId: 5
+              gasto_supermercado:
+                summary: Gasto en supermercado
+                value:
+                  accountId: "ACC001"
+                  postedAt: "2025-09-15T12:30:00Z"
+                  amount: 156.75
+                  type: "DEBIT"
+                  currency: "PEN"
+                  description: "Compras en supermercado"
+                  categoryId: 1
+      responses:
+        '201':
+          description: Transacción creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDto'
+              examples:
+                created:
+                  summary: Transacción creada
+                  value:
+                    id: 100
+                    accountId: "ACC001"
+                    postedAt: "2025-09-15T12:30:00Z"
+                    amount: 156.75
+                    type: "DEBIT"
+                    currency: "PEN"
+                    description: "Compras en supermercado"
+                    categoryId: 1
+                    category:
+                      id: 1
+                      name: "Alimentación"
+                      colorHex: "#FF5722"
+                      createdAt: "2025-09-15T10:30:00Z"
+                    createdAt: "2025-09-15T12:31:00Z"
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Transacciones
+      summary: Listar transacciones
+      description: |
+        Obtiene una lista paginada de transacciones con filtros avanzados.
+        
+        **Filtros disponibles:**
+        - Por categoría específica
+        - Por tipo (CREDIT/DEBIT)
+        - Por rango de fechas
+        - Por rango de montos
+        - Búsqueda de texto en descripción
+        
+        **Campos de ordenamiento permitidos:**
+        - `postedAt` (por defecto, DESC)
+        - `amount`
+        - `description`
+        - `createdAt`
+      operationId: getTransactions
+      parameters:
+        - name: categoryId
+          in: query
+          description: Filtrar por ID de categoría
+          required: false
+          schema:
+            type: integer
+            format: int64
+          example: 1
+        - name: type
+          in: query
+          description: Filtrar por tipo de transacción
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+          example: "DEBIT"
+        - name: fromDate
+          in: query
+          description: Fecha desde (inclusive, formato yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-09-01"
+        - name: toDate
+          in: query
+          description: Fecha hasta (inclusive, formato yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-09-30"
+        - name: minAmount
+          in: query
+          description: Monto mínimo (inclusive)
+          required: false
+          schema:
+            type: number
+            format: decimal
+            minimum: 0
+          example: 100.00
+        - name: maxAmount
+          in: query
+          description: Monto máximo (inclusive)
+          required: false
+          schema:
+            type: number
+            format: decimal
+            minimum: 0
+          example: 1000.00
+        - name: q
+          in: query
+          description: Búsqueda de texto en descripción o nombre de categoría
+          required: false
+          schema:
+            type: string
+          example: "supermercado"
+        - name: page
+          in: query
+          description: Número de página (basado en 0)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Cantidad de elementos por página (1-100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: Campo y dirección de ordenamiento
+          required: false
+          schema:
+            type: string
+            pattern: '^(postedAt|amount|description|createdAt),(ASC|DESC)$'
+            default: "postedAt,DESC"
+          example: "postedAt,DESC"
+      responses:
+        '200':
+          description: Lista de transacciones obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTransactionDto'
+        '400':
+          description: Parámetros de consulta inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/transactions/{id}:
+    get:
+      tags:
+        - Transacciones
+      summary: Obtener transacción por ID
+      description: Obtiene los detalles completos de una transacción específica
+      operationId: getTransactionById
+      parameters:
+        - name: id
+          in: path
+          description: ID único de la transacción
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 100
+      responses:
+        '200':
+          description: Transacción encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDto'
+        '400':
+          description: Transacción no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/transactions/groupedBy:
+    get:
+      tags:
+        - Agregaciones
+      summary: Obtener agregaciones por categoría y cuenta
+      description: |
+        Calcula totales netos agrupados por categoría en un rango de fechas, 
+        opcionalmente filtrado por cuenta específica.
+        
+        **Convención de signos:**
+        - CREDIT: suma positiva
+        - DEBIT: suma negativa
+        - `totalAmount` representa el neto final
+        
+        **Series permitidas:**
+        - `category` (única opción en el piloto)
+        
+        **Filtros adicionales:**
+        - Por cuenta específica (accountId)
+        
+        **Zona horaria:** America/Lima para cálculos de agregación
+      operationId: getTransactionsGroupedBy
+      parameters:
+        - name: series
+          in: query
+          description: Tipo de agrupación (solo 'category' permitido)
+          required: true
+          schema:
+            type: string
+            enum: [category]
+          example: "category"
+        - name: accountId
+          in: query
+          description: Filtrar por ID de cuenta específica
+          required: false
+          schema:
+            type: string
+          example: "ACC001"
+        - name: fromDate
+          in: query
+          description: Fecha desde (inclusiva, formato yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-09-01"
+        - name: toDate
+          in: query
+          description: Fecha hasta (inclusiva, formato yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2025-09-30"
+      responses:
+        '200':
+          description: Agregaciones calculadas exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupedAmountDto'
+              examples:
+                monthly_summary:
+                  summary: Resumen mensual por categorías
+                  value:
+                    - key: "Alimentación"
+                      totalAmount: -345.50
+                      count: 12
+                      currency: "PEN"
+                    - key: "Transporte"
+                      totalAmount: -120.00
+                      count: 5
+                      currency: "PEN"
+                    - key: "Salario"
+                      totalAmount: 3500.00
+                      count: 1
+                      currency: "PEN"
+                account_specific_summary:
+                  summary: Resumen por categorías de cuenta específica
+                  value:
+                    - key: "Alimentación"
+                      totalAmount: -156.75
+                      count: 3
+                      currency: "PEN"
+                    - key: "Transporte"
+                      totalAmount: -45.00
+                      count: 2
+                      currency: "PEN"
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_series:
+                  summary: Serie no permitida
+                  value:
+                    timestamp: "2025-09-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "Serie no permitida: invalid. Valores permitidos: [category]"
+                invalid_date_range:
+                  summary: Rango de fechas inválido
+                  value:
+                    timestamp: "2025-09-15T10:30:00Z"
+                    status: 400
+                    error: "Bad Request"
+                    message: "La fecha desde no puede ser posterior a la fecha hasta"
+
+components:
+  schemas:
+    CreateCategoryDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: Nombre único de la categoría
+          example: "Alimentación"
+        colorHex:
+          type: string
+          maxLength: 7
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Color hexadecimal para la categoría (formato #RRGGBB)
+          example: "#FF5722"
+      description: Datos requeridos para crear una nueva categoría
+
+    CategoryDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Identificador único de la categoría
+          example: 1
+        name:
+          type: string
+          description: Nombre de la categoría
+          example: "Alimentación"
+        colorHex:
+          type: string
+          description: Color hexadecimal de la categoría
+          example: "#FF5722"
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación
+          example: "2025-09-15T10:30:00Z"
+      description: Información completa de una categoría
+
+    CreateTransactionDto:
+      type: object
+      required:
+        - accountId
+        - postedAt
+        - amount
+        - type
+        - currency
+        - description
+      properties:
+        accountId:
+          type: string
+          description: Identificador de la cuenta asociada
+          example: "ACC001"
+        postedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora cuando se realizó la transacción
+          example: "2025-09-15T12:30:00Z"
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Monto de la transacción (siempre positivo)
+          example: 156.75
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+          description: Código de moneda ISO 4217
+          example: "PEN"
+        description:
+          type: string
+          maxLength: 500
+          description: Descripción detallada de la transacción
+          example: "Compras en supermercado"
+        categoryId:
+          type: integer
+          format: int64
+          description: ID de la categoría (opcional)
+          example: 1
+      description: Datos requeridos para crear una nueva transacción
+
+    TransactionDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Identificador único de la transacción
+          example: 100
+        accountId:
+          type: string
+          description: Identificador de la cuenta asociada
+          example: "ACC001"
+        postedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora cuando se realizó la transacción
+          example: "2025-09-15T12:30:00Z"
+        amount:
+          type: number
+          format: decimal
+          description: Monto de la transacción
+          example: 156.75
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        currency:
+          type: string
+          description: Código de moneda
+          example: "PEN"
+        description:
+          type: string
+          description: Descripción de la transacción
+          example: "Compras en supermercado"
+        categoryId:
+          type: integer
+          format: int64
+          description: ID de la categoría asociada
+          example: 1
+        category:
+          $ref: '#/components/schemas/CategoryDto'
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del registro
+          example: "2025-09-15T12:31:00Z"
+      description: Información completa de una transacción
+
+    GroupedAmountDto:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Clave de agrupación (ej. nombre de categoría)
+          example: "Alimentación"
+        totalAmount:
+          type: number
+          format: decimal
+          description: Monto total neto (CREDIT positivo, DEBIT negativo)
+          example: -345.50
+        count:
+          type: integer
+          format: int64
+          description: Cantidad de transacciones en el grupo
+          example: 12
+        currency:
+          type: string
+          description: Moneda de las transacciones
+          example: "PEN"
+      description: Resultado de agregación agrupada por categoría
+
+    TransactionType:
+      type: string
+      enum:
+        - CREDIT
+        - DEBIT
+      description: |
+        Tipo de transacción financiera:
+        - CREDIT: Ingreso de dinero (suma positiva)
+        - DEBIT: Egreso de dinero (suma negativa)
+      example: "DEBIT"
+
+    PageCategoryDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryDto'
+          description: Lista de categorías en la página actual
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        totalElements:
+          type: integer
+          format: int64
+          description: Total de elementos en todas las páginas
+          example: 50
+        totalPages:
+          type: integer
+          description: Total de páginas disponibles
+          example: 3
+        first:
+          type: boolean
+          description: Indica si es la primera página
+          example: true
+        last:
+          type: boolean
+          description: Indica si es la última página
+          example: false
+        numberOfElements:
+          type: integer
+          description: Número de elementos en la página actual
+          example: 20
+      description: Respuesta paginada de categorías
+
+    PageTransactionDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionDto'
+          description: Lista de transacciones en la página actual
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        totalElements:
+          type: integer
+          format: int64
+          description: Total de elementos en todas las páginas
+        totalPages:
+          type: integer
+          description: Total de páginas disponibles
+        first:
+          type: boolean
+          description: Indica si es la primera página
+        last:
+          type: boolean
+          description: Indica si es la última página
+        numberOfElements:
+          type: integer
+          description: Número de elementos en la página actual
+      description: Respuesta paginada de transacciones
+
+    Pageable:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          description: Número de página actual (basado en 0)
+          example: 0
+        pageSize:
+          type: integer
+          description: Tamaño de la página
+          example: 20
+        sort:
+          $ref: '#/components/schemas/Sort'
+      description: Información de paginación
+
+    Sort:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+          description: Indica si los resultados están ordenados
+          example: true
+        ascending:
+          type: boolean
+          description: Indica si el orden es ascendente
+          example: false
+      description: Información de ordenamiento
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Momento en que ocurrió el error
+          example: "2025-09-15T10:30:00Z"
+        status:
+          type: integer
+          description: Código de estado HTTP
+          example: 400
+        error:
+          type: string
+          description: Tipo de error
+          example: "Bad Request"
+        message:
+          type: string
+          description: Mensaje descriptivo del error
+          example: "Error de validación en los datos de entrada"
+        details:
+          type: object
+          additionalProperties:
+            type: string
+          description: Detalles específicos del error (ej. campos de validación)
+          example:
+            name: "El nombre de la categoría es obligatorio"
+            amount: "El monto debe ser mayor a 0"
+      description: Estructura estándar para respuestas de error
+
+tags:
+  - name: Categorías
+    description: Operaciones para gestionar categorías de transacciones
+  - name: Transacciones
+    description: Operaciones para gestionar transacciones financieras
+  - name: Agregaciones
+    description: Operaciones para obtener resúmenes y estadísticas

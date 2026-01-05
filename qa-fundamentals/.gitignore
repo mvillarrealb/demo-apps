@@ -1,0 +1,5 @@
+api-test
+api-test/**
+openapi.yaml
+bruno-test.json
+.DS_Store

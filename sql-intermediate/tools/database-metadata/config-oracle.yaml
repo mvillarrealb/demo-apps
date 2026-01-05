@@ -1,0 +1,22 @@
+# Configuración para conexión a Oracle 23ai
+database:
+  host: localhost
+  port: 1521
+  service_name: ORCL
+  user: banking_user
+  password: PutYourPasswordHere
+  schema: BANKING_USER  # Schema específico para extraer metadatos
+
+# Configuración de extracción
+extraction:
+  include_system_tables: false
+  include_views: true
+  include_functions: true
+  include_procedures: true
+  include_indexes: true
+  include_foreign_keys: true
+
+# Configuración de salida
+output:
+  template: ./templates/SCHEMA_TEMPLATE.md
+  file: ./output/oracle_schema_documentation.md

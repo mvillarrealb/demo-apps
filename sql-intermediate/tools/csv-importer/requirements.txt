@@ -1,0 +1,16 @@
+# Este proyecto no requiere dependencias externas
+# Solo usa librerías estándar de Python 3.7+
+
+# Librerías utilizadas (incluidas en Python):
+# - csv: Procesamiento de archivos CSV
+# - os: Operaciones del sistema de archivos  
+# - sys: Argumentos de línea de comandos
+# - datetime: Manejo de fechas y timestamps
+# - typing: Type hints para mejor documentación
+# - decimal: Precisión decimal para montos bancarios
+# - logging: Sistema de logging robusto
+
+# Para desarrollo/testing (opcional):
+# pytest>=6.0.0
+# black>=21.0.0
+# flake8>=3.8.0

@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    enabled: true
+    url: "jdbc:postgresql://127.0.0.1:5432/order_management"
+    username: "postgres"
+    password: "PutYourPasswordHere"
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: postgres-pool
+---
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+          - prometheus

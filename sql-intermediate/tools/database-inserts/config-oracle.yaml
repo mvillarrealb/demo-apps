@@ -1,0 +1,7 @@
+# Configuración para conexión a Oracle 23ai
+db:
+  host: localhost
+  port: 1521
+  service_name: XEPDB1
+  user: system
+  password: oracle

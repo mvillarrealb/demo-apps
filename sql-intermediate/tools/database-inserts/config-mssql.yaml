@@ -1,0 +1,7 @@
+# Configuración para conexión a SQL Server 2019
+db:
+  host: localhost
+  port: 1433
+  database: banking_demo
+  user: sa
+  password: yourStrong(!)Password

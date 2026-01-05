@@ -1,0 +1,105 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    karateVersion = '1.4.1'
+    junitVersion = '5.10.2'
+}
+
+dependencies {
+    // Karate DSL
+    testImplementation "com.intuit.karate:karate-junit5:${karateVersion}"
+    
+    // JUnit 5
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    
+    // Para mejores reportes y logging
+    testImplementation 'ch.qos.logback:logback-classic:1.4.14'
+    testImplementation 'net.masterthought:cucumber-reporting:5.7.7'
+}
+
+test {
+    useJUnitPlatform()
+    
+    // Configuración para Karate
+    systemProperty 'karate.options', System.getProperty('karate.options')
+    systemProperty 'karate.env', System.getProperty('karate.env')
+    
+    // Configuración de reportes
+    outputs.upToDateWhen { false }
+    
+    // Configuración de JVM para las pruebas
+    jvmArgs '-Xms512m', '-Xmx2048m'
+    
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+        exceptionFormat = 'full'
+    }
+    
+    finalizedBy 'generateReports'
+}
+
+// Tarea personalizada para generar reportes de Karate
+task generateReports(type: JavaExec) {
+    classpath = configurations.testRuntimeClasspath
+    mainClass = 'net.masterthought.cucumber.cli.Main'
+    args = [
+        '--output-folder', 'build/reports/karate',
+        '--json-files', 'build/test-results/test',
+        '--project-name', 'Backend Tests - Karate DSL'
+    ]
+    
+    doFirst {
+        mkdir 'build/reports/karate'
+    }
+    
+    onlyIf {
+        file('build/test-results/test').exists() && 
+        file('build/test-results/test').listFiles()?.find { it.name.endsWith('.json') }
+    }
+}
+
+// Tarea para ejecutar solo las pruebas de Karate
+task karateTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'karate'
+    }
+    
+    systemProperty 'karate.options', System.getProperty('karate.options')
+    systemProperty 'karate.env', System.getProperty('karate.env', 'test')
+    
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+}
+
+// Configuración para desarrollo
+if (project.hasProperty('dev')) {
+    test {
+        systemProperty 'karate.env', 'dev'
+    }
+}
+
+// Configuración wrapper
+wrapper {
+    gradleVersion = '8.4'
+    distributionType = Wrapper.DistributionType.ALL
+}

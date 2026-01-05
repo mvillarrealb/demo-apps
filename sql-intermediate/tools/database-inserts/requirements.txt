@@ -1,0 +1,6 @@
+# Dependencias para database-inserts
+psycopg2-binary==2.9.9         # PostgreSQL 12
+pyodbc==5.1.0                  # SQL Server 2019
+cx_Oracle==8.3.0               # Oracle 23ai
+PyYAML==6.0.1                  # Consultar archivos YAML
+Faker==24.8.0                  # Generar datos mock

@@ -1,0 +1,8 @@
+# Dependencias para csv-generator
+# Compatible con Python 3.13
+
+# Generación de datos sintéticos
+Faker==37.8.0
+
+# Utilidades adicionales
+colorama==0.4.6

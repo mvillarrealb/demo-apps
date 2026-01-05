@@ -1,0 +1,22 @@
+# Configuración para conexión a SQL Server 2019
+database:
+  host: localhost
+  port: 1433
+  database: banking_demo
+  user: sa
+  password: PutYourPasswordHere
+  schema: dbo  # Schema específico para extraer metadatos
+
+# Configuración de extracción
+extraction:
+  include_system_tables: false
+  include_views: true
+  include_functions: true
+  include_procedures: true
+  include_indexes: true
+  include_foreign_keys: true
+
+# Configuración de salida
+output:
+  template: ./templates/SCHEMA_TEMPLATE.md
+  file: ./output/sqlserver_schema_documentation.md
