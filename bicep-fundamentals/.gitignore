@@ -1,0 +1,164 @@
+# Azure Infrastructure - Personal Expenses Application
+# .gitignore
+
+# ==============================================================================
+# DEPLOYMENT OUTPUTS & LOGS
+# ==============================================================================
+
+# Deployment result files
+deployment_output.json
+deployment_outputs.txt
+validation_report_*.md
+deployment_log_*.txt
+
+# Script execution logs
+*.log
+logs/
+temp/
+
+# Backup directories created by cleanup scripts
+backup_*/
+backups/
+
+# Temporary parameter files (created during deployment)
+**/temp_*.bicepparam
+**/tmp_*.bicepparam
+
+# ==============================================================================
+# AZURE CLI & CREDENTIALS
+# ==============================================================================
+
+# Azure CLI cache and config
+.azure/
+*.azureauth
+
+# Service principal keys and secrets
+*.pem
+*.pfx
+*.p12
+sp_*.json
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# ==============================================================================
+# BICEP COMPILATION
+# ==============================================================================
+
+# Compiled ARM templates (generated from .bicep files)
+*.json
+!**/parameters/*.json
+
+# Bicep cache
+.bicep/
+
+# ==============================================================================
+# SYSTEM FILES
+# ==============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ==============================================================================
+# IDE & EDITORS
+# ==============================================================================
+
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==============================================================================
+# DEVELOPMENT & TESTING
+# ==============================================================================
+
+# Node.js (if testing locally)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# PowerShell
+*.ps1xml
+
+# ==============================================================================
+# SENSITIVE DATA
+# ==============================================================================
+
+# Any files with passwords or secrets
+*password*
+*secret*
+*key*
+
+# Configuration files with potentially sensitive data
+config.local.*
+settings.local.*
+
+# Certificate files
+*.cer
+*.crt
+*.der
+
+# ==============================================================================
+# MISCELLANEOUS
+# ==============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Zip files and archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Documentation build outputs
+docs/_build/
+site/
