@@ -1,5 +1,6 @@
 .DS_Store
 *.md
+!**/stories/*_STORIES.md
 */node_modules
 */dist
 */build
