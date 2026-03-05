@@ -1,0 +1,16 @@
+# Dependencias para database-metadata
+# Compatible con Python 3.13+
+
+# Database drivers
+psycopg[binary]>=3.2.0
+pyodbc>=5.2.0
+oracledb>=2.0.0
+
+# Configuration and data processing
+PyYAML>=6.0.0
+
+# Template engine
+Jinja2>=3.1.0
+
+# Additional utility
+colorama>=0.4.6
