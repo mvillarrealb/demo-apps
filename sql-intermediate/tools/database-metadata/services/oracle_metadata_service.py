@@ -2,7 +2,7 @@
 Servicio de extracción de metadatos para Oracle.
 Implementa todas las consultas específicas para Oracle.
 """
-import cx_Oracle
+import oracledb
 import logging
 from typing import Dict, Any
 from .database_metadata_service import DatabaseMetadataService
@@ -21,8 +21,8 @@ class OracleMetadataService(DatabaseMetadataService):
         """Crear conexión a Oracle"""
         try:
             service_name = self.config.get('service_name', 'ORCL')
-            dsn = cx_Oracle.makedsn(self.config['host'], self.config['port'], service_name=service_name)
-            connection = cx_Oracle.connect(self.config['user'], self.config['password'], dsn)
+            dsn = oracledb.makedsn(self.config['host'], self.config['port'], service_name=service_name)
+            connection = oracledb.connect(user=self.config['user'], password=self.config['password'], dsn=dsn)
             connection.autocommit = True
             return connection
         except Exception as e:

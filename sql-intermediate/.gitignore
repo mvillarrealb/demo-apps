@@ -450,3 +450,6 @@ dev.*
 development.*
 
 .RESOLVED.md
+.DS_Store
+!**/templates/SCHEMA_TEMPLATE.md
+!**/README.md

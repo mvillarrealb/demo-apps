@@ -2,7 +2,7 @@
 Servicio de extracción de metadatos para PostgreSQL.
 Implementa todas las consultas específicas para PostgreSQL.
 """
-import psycopg2
+import psycopg
 import logging
 from typing import Dict, Any
 from .database_metadata_service import DatabaseMetadataService
@@ -20,14 +20,14 @@ class PostgresMetadataService(DatabaseMetadataService):
     def _create_connection(self):
         """Crear conexión a PostgreSQL"""
         try:
-            connection = psycopg2.connect(
+            connection = psycopg.connect(
                 host=self.config['host'],
                 port=self.config['port'],
-                database=self.config['database'],
+                dbname=self.config['database'],
                 user=self.config['user'],
-                password=self.config['password']
+                password=self.config['password'],
+                autocommit=True
             )
-            connection.autocommit = True
             return connection
         except Exception as e:
             logger.error(f"Error connecting to PostgreSQL: {e}")
